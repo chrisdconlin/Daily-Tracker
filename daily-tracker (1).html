@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#1a9e75;--green-l:#e6f7f2;--green-d:#0f6e52;
+  --amber:#d97706;--amber-l:#fef3c7;
+  --red:#dc2626;--red-l:#fee2e2;
+  --blue:#2563eb;--blue-l:#dbeafe;
+  --purple:#7c3aed;--purple-l:#ede9fe;
+  --ink:#111827;--ink2:#374151;--ink3:#6b7280;--ink4:#9ca3af;
+  --line:#e5e7eb;--line2:#f3f4f6;--bg:#f9fafb;--card:#fff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:15px;padding-bottom:90px}
+.app{max-width:600px;margin:0 auto}
+
+/* HEADER */
+.header{background:var(--card);border-bottom:1px solid var(--line);padding:14px 16px 0;position:sticky;top:0;z-index:50}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.header-title{font-size:17px;font-weight:600;color:var(--ink)}
+.pts-badge{font-family:'DM Mono',monospace;font-size:13px;background:var(--green-l);color:var(--green-d);padding:4px 10px;border-radius:20px;font-weight:500}
+.level-bar-wrap{margin-bottom:0}
+.level-info{display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);margin-bottom:4px}
+.level-name{font-weight:600;color:var(--ink2)}
+.header-bar-bg{background:var(--line2);border-radius:4px;height:5px;margin-bottom:12px;overflow:hidden}
+.header-bar-fill{height:100%;border-radius:4px;background:var(--green);transition:width .5s}
+
+/* TABS */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--line)}
+.tab{flex:1;text-align:center;padding:9px 4px;font-size:13px;font-weight:500;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s}
+.tab.active{color:var(--green);border-bottom-color:var(--green)}
+
+/* PANELS */
+.panel{display:none;padding:14px 16px}
+.panel.active{display:block}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.card-title{font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card-badge{font-size:10px;background:var(--line2);color:var(--ink3);border-radius:8px;padding:1px 7px;font-weight:500;text-transform:none;letter-spacing:0}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.metric{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.metric-label{font-size:11px;color:var(--ink3);margin-bottom:3px}
+.metric-val{font-size:26px;font-weight:600;line-height:1}
+.metric-sub{font-size:11px;color:var(--ink4);margin-top:3px}
+.metric-val.over{color:var(--red)}
+.metric-val.close{color:var(--amber)}
+.metric-val.good{color:var(--green)}
+
+/* PROGRESS BAR */
+.prog-wrap{margin-bottom:12px}
+.prog-labels{display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:5px}
+.prog-bg{background:var(--line2);border-radius:6px;height:9px;overflow:hidden}
+.prog-fill{height:100%;border-radius:6px;background:var(--green);transition:width .4s}
+.prog-fill.over{background:var(--red)}
+.prog-fill.close{background:var(--amber)}
+
+/* HABIT ROWS */
+.habit-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line2)}
+.habit-row:last-child{border-bottom:none}
+.habit-check{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--line);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.habit-check.done{background:var(--green);border-color:var(--green)}
+.habit-check.done::after{content:"";display:block;width:6px;height:10px;border:2px solid white;border-top:none;border-left:none;transform:rotate(40deg) translate(-1px,-2px)}
+.habit-name{flex:1;font-size:14px;color:var(--ink2);line-height:1.3}
+.habit-pts{font-size:12px;font-weight:600;color:var(--ink3);background:var(--line2);border-radius:5px;padding:2px 7px;flex-shrink:0}
+.habit-pts.earned{color:var(--green);background:var(--green-l)}
+.habit-tag{font-size:10px;padding:2px 6px;border-radius:4px;margin-left:4px;font-weight:500}
+.tag-bonus{background:var(--green-l);color:var(--green-d)}
+.tag-weekly{background:var(--blue-l);color:var(--blue)}
+.tag-cal{background:var(--purple-l);color:var(--purple)}
+
+/* WEEK GRID */
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.day-cell{border:1px solid var(--line);border-radius:5px;padding:5px 3px;text-align:center}
+.day-cell.active{background:var(--green-l);border-color:#9FE1CB}
+.day-cell.today{border-color:var(--green);border-width:1.5px}
+.day-lbl{font-size:10px;color:var(--ink4)}
+.day-pts{font-size:11px;font-weight:600;color:var(--ink3)}
+.day-cell.active .day-pts{color:var(--green-d)}
+
+/* MILESTONES */
+.milestone-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ms{border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
+.ms.unlocked{border-color:var(--green);background:var(--green-l)}
+.ms-lbs{font-size:18px;font-weight:600;color:var(--ink)}
+.ms.unlocked .ms-lbs{color:var(--green-d)}
+.ms-reward{font-size:11px;color:var(--ink3);margin-top:3px;line-height:1.35}
+.ms.unlocked .ms-reward{color:var(--green-d)}
+.ms-lock{font-size:10px;color:var(--ink4);margin-top:4px}
+.ms.unlocked .ms-lock{color:var(--green)}
+
+/* WEIGHT LOG */
+.weight-row{display:flex;gap:8px;margin-top:10px}
+.weight-input{flex:1;font-size:14px;padding:8px 11px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.weight-input:focus{outline:none;border-color:var(--green)}
+.btn{font-size:13px;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;font-family:'DM Sans',sans-serif}
+.btn:hover{background:var(--line2)}
+.btn-green{background:var(--green);border-color:var(--green);color:white}
+.btn-green:hover{background:var(--green-d)}
+.btn-full{width:100%}
+.btn:disabled{opacity:.4;cursor:default}
+
+/* CALORIE LOG */
+.qbtn{font-size:11px;padding:4px 10px;border-radius:10px;border:1px solid var(--line);background:var(--line2);color:var(--ink2);cursor:pointer}
+.qbtn:hover{background:var(--green-l);border-color:#9FE1CB}
+.search-wrap{position:relative;margin-bottom:8px}
+.food-input{font-size:14px;padding:9px 12px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--ink);width:100%;display:block;font-family:'DM Sans',sans-serif}
+.food-input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(26,158,117,.1)}
+.suggestions{position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--line);border-top:none;border-radius:0 0 9px 9px;z-index:30;max-height:200px;overflow-y:auto;display:none;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.suggestions.show{display:block}
+.sug-item{padding:8px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line2)}
+.sug-item:last-child{border-bottom:none}
+.sug-item:hover{background:var(--green-l)}
+.sug-name{font-size:13px;color:var(--ink);font-weight:500}
+.sug-detail{font-size:11px;color:var(--ink4);margin-top:1px}
+.sug-cals{font-size:13px;font-weight:700;color:var(--green);flex-shrink:0;margin-left:8px}
+.cal-adjust{align-items:center;gap:10px;margin-bottom:8px;padding:10px 12px;background:var(--green-l);border-radius:8px;border:1px solid #9FE1CB;display:none}
+.cal-adjust.show{display:flex}
+.cal-note{font-size:12px;color:var(--ink2);flex:1;line-height:1.4}
+.cal-num{font-size:15px;padding:6px 8px;border-radius:7px;border:1px solid var(--line);width:75px;text-align:center;font-weight:700;font-family:'DM Mono',monospace}
+.cal-num:focus{outline:none;border-color:var(--green)}
+
+/* LOG ITEMS */
+.log-item{display:flex;align-items:flex-start;gap:8px;padding:9px 0;border-bottom:1px solid var(--line2)}
+.log-item:last-child{border-bottom:none}
+.log-info{flex:1}
+.log-name{font-size:13px;font-weight:500;color:var(--ink)}
+.log-note{font-size:11px;color:var(--ink4);margin-top:2px;line-height:1.4}
+.log-r{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.log-time{font-size:11px;color:var(--ink4)}
+.log-cals{font-size:14px;font-weight:700;color:var(--ink)}
+.log-rm{font-size:19px;color:var(--ink4);cursor:pointer;background:none;border:none;line-height:1;padding:0 2px;font-family:'DM Sans',sans-serif}
+.log-rm:hover{color:var(--red)}
+.empty{text-align:center;padding:20px;color:var(--ink4);font-size:13px}
+
+/* WEEK BARS */
+.bars{display:flex;gap:5px;align-items:flex-end}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.bar-bg{width:100%;background:var(--line2);border-radius:3px 3px 0 0;position:relative;height:55px;overflow:hidden}
+.bar-fill{position:absolute;bottom:0;left:0;right:0;background:var(--green)}
+.bar-fill.over{background:var(--red)}
+.bar-fill.close{background:var(--amber)}
+.bar-day{font-size:10px;color:var(--ink4)}
+.bar-val{font-size:10px;color:var(--ink3);font-weight:500}
+
+/* DAY NAV */
+.day-nav{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.day-nav-lbl{flex:1;text-align:center;font-size:14px;font-weight:600;color:var(--ink)}
+.day-nav-btn{font-size:20px;padding:2px 11px;border-radius:7px;border:1px solid var(--line);background:var(--card);color:var(--ink3);cursor:pointer;line-height:1.3}
+.day-nav-btn:hover{background:var(--line2)}
+
+/* STATUS */
+.status-msg{font-size:12px;min-height:16px;margin-top:5px}
+.status-msg.ok{color:var(--green);font-weight:500}
+.status-msg.err{color:var(--red)}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--ink);color:white;font-size:13px;padding:8px 18px;border-radius:20px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:100;white-space:nowrap}
+.toast.show{opacity:1}
+
+/* LEVEL PANEL */
+.level-card{background:linear-gradient(135deg,var(--green) 0%,var(--green-d) 100%);border-radius:14px;padding:18px;margin-bottom:12px;color:white}
+.lc-name{font-size:22px;font-weight:700;margin-bottom:2px}
+.lc-sub{font-size:13px;opacity:.8;margin-bottom:14px}
+.lc-bar-bg{background:rgba(255,255,255,.25);border-radius:6px;height:8px;overflow:hidden;margin-bottom:6px}
+.lc-bar-fill{height:100%;border-radius:6px;background:white;transition:width .5s}
+.lc-labels{display:flex;justify-content:space-between;font-size:11px;opacity:.8}
+.level-list{display:flex;flex-direction:column;gap:6px}
+.level-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--card)}
+.level-row.current{border-color:var(--green);background:var(--green-l)}
+.level-row.done{opacity:.55}
+.lr-num{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--ink3);width:20px;flex-shrink:0}
+.lr-name{flex:1;font-size:14px;font-weight:500;color:var(--ink)}
+.lr-pts{font-size:12px;color:var(--ink3)}
+.lr-badge{font-size:10px;background:var(--green);color:white;border-radius:5px;padding:2px 7px;font-weight:600}
+
+/* TIPS */
+.tip{font-size:12px;color:var(--ink4);margin-top:6px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="header">
+  <div class="header-top">
+    <div class="header-title">Daily Tracker</div>
+    <div class="pts-badge" id="hdr-pts">0 pts total</div>
+  </div>
+  <div class="level-bar-wrap">
+    <div class="level-info">
+      <span class="level-name" id="hdr-level">Rookie</span>
+      <span id="hdr-next-pts"></span>
+    </div>
+    <div class="header-bar-bg">
+      <div class="header-bar-fill" id="hdr-bar" style="width:0%"></div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('calories')">Calories</div>
+    <div class="tab" onclick="switchTab('habits')">Habits</div>
+    <div class="tab" onclick="switchTab('progress')">Progress</div>
+  </div>
+</div>
+
+<!-- HABITS PANEL -->
+<div class="panel" id="panel-habits">
+
+  <div class="day-nav">
+    <button class="day-nav-btn" id="h-prev">‹</button>
+    <div class="day-nav-lbl" id="h-day-lbl">Today</div>
+    <button class="day-nav-btn" id="h-next">›</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Core habits</div>
+    <div id="core-list"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Bonus habits <span class="habit-tag tag-bonus">extra pts</span></div>
+    <div id="bonus-list"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Calorie habits <span class="habit-tag tag-cal">from tracker</span></div>
+    <div id="cal-habit-list"></div>
+    <div class="tip">These update automatically when you log food in the Calories tab.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Weekly wins <span class="habit-tag tag-weekly">bonus pts</span></div>
+    <div id="weekly-list"></div>
+    <div class="tip">Mark at end of week. Resets each Sunday.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">This week</div>
+    <div class="week-grid" id="week-grid"></div>
+  </div>
+
+</div>
+
+<!-- CALORIES PANEL -->
+<div class="panel active" id="panel-calories">
+
+  <div class="day-nav">
+    <button class="day-nav-btn" id="c-prev">‹</button>
+    <div class="day-nav-lbl" id="c-day-lbl">Today</div>
+    <button class="day-nav-btn" id="c-next">›</button>
+  </div>
+
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-label">Eaten</div>
+      <div class="metric-val" id="c-eaten">0</div>
+      <div class="metric-sub">of 1,800 goal</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Remaining</div>
+      <div class="metric-val" id="c-rem">1,800</div>
+      <div class="metric-sub" id="c-rem-sub">remaining</div>
+    </div>
+  </div>
+
+  <div class="prog-wrap">
+    <div class="prog-labels"><span id="c-pct">0%</span><span>1,800 cal</span></div>
+    <div class="prog-bg"><div class="prog-fill" id="c-bar" style="width:0%"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Log food</div>
+    <div class="search-wrap">
+      <input type="text" class="food-input" id="food-input" placeholder="Search or type any food..." autocomplete="off" autocorrect="off" spellcheck="false" />
+      <div class="suggestions" id="suggestions"></div>
+    </div>
+    <div class="cal-adjust" id="cal-adjust">
+      <div class="cal-note" id="cal-note" style="flex:1"></div>
+      <input type="number" class="cal-num" id="cal-num" min="0" max="9999" />
+      <span style="font-size:12px;color:var(--ink3)">cal</span>
+    </div>
+    <button class="btn btn-green btn-full" id="log-btn" disabled>Type a food name above</button>
+    <div class="status-msg" id="log-status"></div>
+    <div class="tip" style="margin-top:6px">Search finds calories automatically. For anything else, type a name and enter calories manually.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" id="c-log-title">Today's log</div>
+    <div id="food-log"></div>
+
+  </div>
+
+  <div class="card">
+    <div class="card-title">This week</div>
+    <div class="bars" id="cal-bars"></div>
+  </div>
+
+</div>
+
+<!-- PROGRESS PANEL -->
+<div class="panel" id="panel-progress">
+
+  <div class="level-card">
+    <div class="lc-name" id="lc-name">Rookie</div>
+    <div class="lc-sub" id="lc-sub">Just getting started</div>
+    <div class="lc-bar-bg"><div class="lc-bar-fill" id="lc-bar" style="width:0%"></div></div>
+    <div class="lc-labels"><span id="lc-cur-pts">0 pts</span><span id="lc-next-name">Getting Started</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Weight progress</div>
+    <div id="weight-graphic" style="margin-bottom:14px"></div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:12px;color:var(--ink3);margin-bottom:6px">Log your current weight</div>
+      <div class="weight-row">
+        <input type="number" class="weight-input" id="w-input" placeholder="e.g. 215 lbs" step="0.1" />
+        <button class="btn btn-green" id="w-btn">Log</button>
+      </div>
+      <div id="w-status" style="font-size:12px;color:var(--ink3);margin-top:6px;min-height:16px"></div>
+    </div>
+    <div class="card-title" style="margin-top:4px">Milestones</div>
+    <div class="milestone-grid" id="milestones"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">All levels</div>
+    <div class="level-list" id="level-list"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Points this week <span class="card-badge" id="week-pts-badge">0 pts</span></div>
+    <div class="bars" id="habit-bars"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Backup your data</div>
+    <div style="font-size:13px;color:var(--ink3);margin-bottom:12px;line-height:1.5">Export saves everything — points, habits, food logs, weight — to a file. Import restores from that file. Do this weekly to protect your progress.</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-green" id="export-btn" style="flex:1">Export data</button>
+      <label class="btn" style="flex:1;text-align:center;cursor:pointer;display:flex;align-items:center;justify-content:center">
+        Import data
+        <input type="file" id="import-file" accept=".json" style="display:none" />
+      </label>
+    </div>
+    <div id="backup-status" style="font-size:12px;margin-top:8px;min-height:16px;color:var(--green)"></div>
+  </div>
+
+</div>
+
+</div><!-- .app -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── LEVELS ──────────────────────────────────────────────────────────────
+var LEVELS=[
+  {n:"Rookie",          min:0,      desc:"Day one. Let\'s go.",                         reward:null},
+  {n:"Showing Up",      min:300,    desc:"Proving you\'re serious.",                    reward:"$25 to spend however you want"},
+  {n:"Finding Rhythm",  min:800,    desc:"A habit is forming.",                        reward:"Movie night — you pick, you control the snacks"},
+  {n:"Building Habits", min:1800,   desc:"This is becoming real.",                     reward:"New book or game — your pick"},
+  {n:"In the Groove",   min:3500,   desc:"Two solid weeks in.",                        reward:"Favorite meal out — wherever you want"},
+  {n:"Consistent",      min:6000,   desc:"A month of showing up.",                     reward:"New piece of gear under $50"},
+  {n:"Locked In",       min:10000,  desc:"Six weeks strong.",                          reward:"Day off — no agenda, no obligations"},
+  {n:"Disciplined",     min:16000,  desc:"Three months of work.",                      reward:"Victoria plans a surprise for you"},
+  {n:"Committed",       min:24000,  desc:"This is who you are now.",                   reward:"Favorite meal out — anywhere, no budget"},
+  {n:"Relentless",      min:34000,  desc:"Half a year in. Rare.",                      reward:"New piece of gear — your pick, no limit"},
+  {n:"Elite",           min:47000,  desc:"Top 1%. You earned it.",                     reward:"Day off — Victoria plans the whole thing"},
+  {n:"Transformed",     min:65000,  desc:"A year of becoming.",                        reward:"Victoria plans a surprise weekend"},
+];
+
+// ── HABITS ──────────────────────────────────────────────────────────────
+var CORE=[
+  {id:'no_late',   name:'No eating after 8pm',                      pts:20},
+  {id:'water',     name:'64+ oz of water',                          pts:15},
+  {id:'no_ff',     name:'No fast food today',                       pts:20},
+  {id:'planned',   name:'Meals planned before noon',                pts:10},
+  {id:'workout',   name:'Worked out today',                         pts:30},
+  {id:'burn600',   name:'Burned 600+ calories today',               pts:25},
+];
+var BONUS=[
+  {id:'if16',      name:'Intermittent fasting',                     pts:25},
+  {id:'ate_home',  name:'Ate at home instead of going out',         pts:20},
+  {id:'healthy_out',name:'Healthy choice when eating out',          pts:20},
+  {id:'veggie',    name:'Made a veggie side',                       pts:15},
+  {id:'low_inf',   name:'Chose a low-inflammation option',          pts:15},
+  {id:'no_sugar',  name:'No sugar / no processed snacks',           pts:20},
+];
+var CAL_HABITS=[
+  {id:'ch_logged3', name:'Logged at least 3 meals today',   pts:20},
+  {id:'ch_under',   name:'Stayed under 1,800 cal goal',     pts:25},
+];
+var WEEKLY=[
+  {id:'w_home5',    name:'Ate at home 5+ days this week',   pts:50},
+  {id:'w_noff',     name:'Zero fast food all week',         pts:50},
+  {id:'w_habits5',  name:'Hit core habits 5+ days',         pts:75},
+  {id:'w_lostw',    name:'Lost weight vs. last weigh-in',   pts:100},
+  {id:'w_recipe',   name:'Tried a new healthy recipe',      pts:30},
+  {id:'w_under5',   name:'Under cal goal 5+ days this week',pts:60},
+  {id:'w_workout3', name:'Worked out 3+ times this week',   pts:80},
+];
+
+// ── MILESTONES ───────────────────────────────────────────────────────────
+var MILESTONES=[
+  {lbs:5,  reward:'Steak dinner out — just you and Victoria'},
+  {lbs:10, reward:'New clothing item — your pick'},
+  {lbs:15, reward:'Victoria picks the reward'},
+  {lbs:20, reward:'Concert or sporting event tickets'},
+  {lbs:25, reward:'New clothing item — full outfit'},
+  {lbs:30, reward:'Weekend trip — just you and Victoria'},
+  {lbs:42, reward:'Book a cruise!!!'},
+];
+
+
+// ── FOOD DATABASE ────────────────────────────────────────────────────────
+var DB=[
+["Pork tenderloin",420,"~6oz with sides"],
+["Shrimp scampi",580,"1 plate with pasta"],
+["Salmon",380,"6oz fillet"],
+["Lemon-Garlic Salmon",400,"6oz with butter"],
+["Honey-Soy Salmon",420,"6oz with glaze"],
+["Sheet-Pan Honey Jerk Salmon",430,"6oz with peppers"],
+["Spaghetti and meatballs",680,"1 plate ~2 cups"],
+["Turkey Egg Roll in a Bowl",420,"1 serving with spicy mayo"],
+["Ground beef casserole baked penne",620,"1 generous serving"],
+["Thai fried rice noodles",540,"1 plate"],
+["Indian butter chicken with rice",650,"1 plate with rice"],
+["Pad Thai",580,"1 plate"],
+["Shishkabobs",480,"3-4 skewers"],
+["Korean Ground Beef and Rice Bowl",560,"1 bowl with rice"],
+["Parmesan crusted pork loin",450,"~6oz"],
+["Pork loin",400,"~6oz"],
+["Burgers",650,"1 burger with bun"],
+["Smash burgers",700,"double with cheese"],
+["Chicken Tetrazzini",620,"1 serving"],
+["Chicken cordon bleu",520,"1 stuffed breast"],
+["Chicken cordon bleu casserole",580,"1 serving"],
+["Chicken fried rice",500,"1.5 cups"],
+["Tater tot bake",640,"1 serving"],
+["Ravioli",560,"1 plate"],
+["One-pot cheesy bacon ranch pasta",700,"1 generous serving"],
+["Broccoli Cheddar Soup",380,"1 large bowl"],
+["Fried Rice",480,"1.5 cups"],
+["Basil Thai Chicken and peppers",460,"1 plate with rice"],
+["Teriyaki Chicken Bowl",520,"1 bowl"],
+["Instant Pot Teriyaki Chicken",500,"1 bowl"],
+["Chicken burrito bowl",620,"1 bowl with toppings"],
+["Honey garlic chicken and rice",560,"1 plate"],
+["Greek chicken bowl",580,"1 bowl with pita"],
+["Beef and broccoli stir fry",520,"1 plate with rice"],
+["Baked ziti",650,"1 serving"],
+["Creamy Tuscan chicken pasta",680,"1 plate"],
+["Chicken and stuffing bake",580,"1 serving"],
+["White chicken chili",480,"1 large bowl"],
+["Sheet pan chicken fajitas",540,"3 fajitas"],
+["Lemon herb chicken thighs",480,"2 thighs with potatoes"],
+["Chicken tortilla soup",420,"1 large bowl"],
+["Carne asada tacos",580,"3 tacos"],
+["Creamy chicken and gnocchi soup",520,"1 large bowl"],
+["Philly cheesesteak skillet",680,"1 serving with roll"],
+["Totchos",720,"1 serving"],
+["Enchiladas",580,"2 enchiladas"],
+["Orange Teriyaki Chicken",520,"1 plate with rice"],
+["Oriental Sesame Chicken",540,"1 plate with rice"],
+["Chicken Kabob",460,"4 skewers with veggies"],
+["Shrimp Enchiladas",520,"2 enchiladas"],
+["Spaghetti with Sausage and Spinach",620,"1 plate"],
+["Potato and Ham Bake",560,"1 serving"],
+["Caesar Chicken Thighs with Broccoli",480,"2 thighs"],
+["Chorizo and Potato Taquitos",620,"4 taquitos"],
+["Tandoori Chicken",480,"2 thighs with naan"],
+["Gyros",580,"1 pita"],
+["Fish Tacos",520,"3 tacos"],
+["Instant Pot Chicken and Rice",540,"1 serving"],
+["Tikka Masala",620,"1 plate with rice"],
+["Ramen Bowl",580,"1 large bowl"],
+["Tortellini Soup",520,"1 large bowl"],
+["Gnocchi with Italian Sausage",600,"1 serving"],
+["Tacos",520,"3 tacos with beef"],
+["Quesadilla",480,"1 large"],
+["Hot dogs",340,"2 with buns"],
+["Taco soup",420,"1 large bowl"],
+["Pizza",560,"2 slices"],
+["Pizza slice",290,"1 large slice"],
+["Nuggets",480,"10 pieces"],
+["Hot ham and cheese",420,"1 sandwich"],
+["Lasagna",620,"1 serving"],
+["Scrambled eggs",220,"3 eggs with butter"],
+["Fried eggs",190,"2 eggs"],
+["Omelette",300,"3-egg omelette"],
+["Pancakes",480,"3 with syrup"],
+["Waffles",520,"2 with syrup"],
+["French toast",460,"2 slices with syrup"],
+["Oatmeal",280,"1 cup cooked"],
+["Cereal with milk",320,"1 bowl"],
+["Bagel with cream cheese",420,"1 bagel"],
+["Toast",160,"2 slices with butter"],
+["Avocado toast",320,"2 slices"],
+["Breakfast burrito",580,"1 large"],
+["Breakfast sandwich",450,"egg cheese meat on biscuit"],
+["Greek yogurt",150,"1 cup plain"],
+["Greek yogurt with granola",280,"1 cup with granola"],
+["Granola bar",190,"1 bar"],
+["Banana",105,"1 medium"],
+["Apple",95,"1 medium"],
+["Orange",85,"1 medium"],
+["Berries",70,"1 cup mixed"],
+["Protein shake",220,"1 scoop with milk"],
+["Smoothie",320,"16oz fruit smoothie"],
+["Chicken breast",280,"6oz grilled"],
+["Chicken thighs",320,"2 thighs grilled"],
+["Rotisserie chicken",340,"2 pieces leg and thigh"],
+["Ground beef",340,"4oz cooked 80/20"],
+["Ground turkey",240,"4oz cooked"],
+["Steak",400,"6oz sirloin"],
+["Salmon fillet",350,"6oz"],
+["Shrimp",150,"4oz cooked"],
+["Tilapia",220,"6oz fillet"],
+["Tuna",180,"1 can in water"],
+["Pork chop",320,"6oz"],
+["Italian sausage",380,"2 links"],
+["Bacon",220,"4 strips"],
+["Deli ham",120,"4 slices"],
+["Deli turkey",100,"4 slices"],
+["White rice",240,"1 cup cooked"],
+["Brown rice",220,"1 cup cooked"],
+["Pasta",320,"1 cup cooked"],
+["Mashed potatoes",280,"1 cup with butter"],
+["Baked potato",290,"1 medium with toppings"],
+["French fries",380,"medium order"],
+["Sweet potato fries",340,"medium order"],
+["Tater tots",300,"15 tots"],
+["Mac and cheese",380,"1 cup"],
+["Bread roll",150,"1 roll"],
+["Tortilla chips",280,"small handful"],
+["Potato chips",300,"1 oz bag"],
+["Crackers",140,"~15 crackers"],
+["Bread",130,"2 slices"],
+["Salad",180,"large with dressing"],
+["Caesar salad",280,"large"],
+["Side salad",120,"small with dressing"],
+["Broccoli",55,"1 cup steamed"],
+["Green beans",45,"1 cup"],
+["Corn",130,"1 cup"],
+["Mixed vegetables",80,"1 cup"],
+["Coleslaw",150,"half cup"],
+["Cheese stick",80,"1 stick"],
+["String cheese",80,"1 piece"],
+["Peanut butter",190,"2 tablespoons"],
+["Almonds",170,"small handful"],
+["Trail mix",340,"quarter cup"],
+["Popcorn",120,"3 cups"],
+["Pretzels",220,"1 oz bag"],
+["Doritos",280,"1 bag 1.75oz"],
+["Chips and queso",480,"chips plus 4oz queso"],
+["Candy bar",280,"1 full size"],
+["Cookies",240,"3 medium cookies"],
+["Ice cream",280,"half cup"],
+["Brownie",230,"1 square"],
+["Big Mac",550,"1 sandwich"],
+["McDouble",400,"1 sandwich"],
+["Quarter Pounder with Cheese",520,"1 sandwich"],
+["McNuggets 10 piece",470,"10 pieces"],
+["McChicken",400,"1 sandwich"],
+["McDonald's fries",380,"medium"],
+["Egg McMuffin",310,"1 sandwich"],
+["Egg McMuffin meal",550,"sandwich plus hashbrown and coffee"],
+["Sausage McMuffin",400,"1 sandwich"],
+["Sausage McMuffin with Egg",480,"1 sandwich"],
+["McDonald's hashbrown",150,"1 piece"],
+["McDonald's hotcakes",590,"3 hotcakes with syrup and butter"],
+["McDonald's breakfast burrito",300,"1 burrito"],
+["Sausage biscuit",460,"1 biscuit"],
+["Chick-fil-A chicken sandwich",440,"1 original sandwich"],
+["Chick-fil-A chicken deluxe sandwich",500,"1 sandwich"],
+["Chick-fil-A spicy chicken sandwich",460,"1 sandwich"],
+["Chick-fil-A spicy deluxe sandwich",550,"1 sandwich"],
+["Chick-fil-A grilled chicken sandwich",320,"1 sandwich"],
+["Chick-fil-A grilled chicken club sandwich",460,"1 sandwich"],
+["Chick-fil-A smokehouse BBQ bacon sandwich",540,"1 sandwich"],
+["Chick-fil-A honey pepper pimento sandwich",510,"1 sandwich"],
+["Chick-fil-A pretzel cheddar club sandwich",630,"1 sandwich"],
+["Chick-fil-A nuggets 8 count",250,"8 pieces"],
+["Chick-fil-A nuggets 12 count",380,"12 pieces"],
+["Chick-fil-A grilled nuggets 8 count",140,"8 pieces"],
+["Chick-fil-A grilled nuggets 12 count",200,"12 pieces"],
+["Chick-fil-A chicken strips 3 count",310,"3 strips"],
+["Chick-fil-A chicken strips 4 count",410,"4 strips"],
+["Chick-fil-A grilled cool wrap",350,"1 wrap"],
+["Chick-fil-A chicken biscuit",460,"1 biscuit"],
+["Chick-fil-A spicy chicken biscuit",430,"1 biscuit"],
+["Chick-fil-A chicken egg cheese biscuit",530,"1 biscuit"],
+["Chick-fil-A bacon egg cheese biscuit",420,"1 biscuit"],
+["Chick-fil-A sausage egg cheese biscuit",630,"1 biscuit"],
+["Chick-fil-A hot buttered biscuit",290,"1 biscuit"],
+["Chick-fil-A chicken egg cheese muffin",420,"1 muffin"],
+["Chick-fil-A egg cheese english muffin",300,"1 muffin"],
+["Chick-fil-A egg white grill",290,"1 sandwich"],
+["Chick-fil-A chick-n-minis 4 count",390,"4 minis"],
+["Chick-fil-A hash browns",270,"1 serving"],
+["Chick-fil-A hash brown scramble bowl",440,"1 bowl with sausage"],
+["Chick-fil-A hash brown scramble burrito",680,"1 burrito with sausage"],
+["Chick-fil-A yogurt parfait",280,"with harvest nut granola"],
+["Chick-fil-A waffle fries small",320,"small"],
+["Chick-fil-A waffle fries medium",420,"medium"],
+["Chick-fil-A waffle fries large",550,"large"],
+["Chick-fil-A mac and cheese medium",270,"medium"],
+["Chick-fil-A mac and cheese large",450,"large"],
+["Chick-fil-A fruit cup",50,"small"],
+["Chick-fil-A kale crunch side",120,"1 serving"],
+["Chick-fil-A side salad",160,"no dressing"],
+["Chick-fil-A chicken noodle soup",230,"large"],
+["Chick-fil-A chicken tortilla soup",550,"large"],
+["Chick-fil-A waffle potato chips",220,"1 bag"],
+["Chick-fil-A market salad",330,"with grilled chicken no dressing"],
+["Chick-fil-A cobb salad",460,"with grilled chicken no dressing"],
+["Chick-fil-A spicy southwest salad",500,"with fried chicken no dressing"],
+["Chick-fil-A lemonade small",130,"small"],
+["Chick-fil-A lemonade medium",220,"medium"],
+["Chick-fil-A lemonade large",300,"large"],
+["Chick-fil-A diet lemonade small",30,"small"],
+["Chick-fil-A diet lemonade medium",55,"medium"],
+["Chick-fil-A sweet tea small",70,"small"],
+["Chick-fil-A sweet tea medium",120,"medium"],
+["Chick-fil-A sweet tea large",170,"large"],
+["Chick-fil-A unsweetened iced tea",0,"any size"],
+["Chick-fil-A iced coffee",190,"medium vanilla"],
+["Chick-fil-A mocha cream cold brew",330,"medium"],
+["Chick-fil-A mango passion tea lemonade",170,"medium"],
+["Chick-fil-A frosted lemonade small",250,"small"],
+["Chick-fil-A frosted lemonade medium",330,"medium"],
+["Chick-fil-A frosted coffee medium",260,"medium"],
+["Chick-fil-A vanilla milkshake",600,"medium"],
+["Chick-fil-A chocolate milkshake",660,"medium"],
+["Chick-fil-A strawberry milkshake",690,"medium"],
+["Chick-fil-A cookies and cream milkshake",690,"medium"],
+["Chick-fil-A icedream cone",170,"1 cone"],
+["Chick-fil-A icedream cup",120,"1 cup"],
+["Chick-fil-A chocolate chunk cookie",350,"1 cookie"],
+["Chick-fil-A chocolate fudge brownie",370,"1 brownie"],
+["Chick-fil-A sauce",140,"1 packet"],
+["Chick-fil-A polynesian sauce",110,"1 packet"],
+["Chick-fil-A honey mustard sauce",50,"1 packet"],
+["Chick-fil-A barbecue sauce",45,"1 packet"],
+["Chick-fil-A buffalo sauce",25,"1 packet"],
+["Chick-fil-A garden herb ranch sauce",140,"1 packet"],
+["Wendy's Dave's Single",580,"1 burger"],
+["Wendy's Frosty",340,"medium"],
+["Subway footlong",720,"turkey on wheat with veggies"],
+["Subway 6 inch",360,"turkey on wheat"],
+["Chipotle burrito",1050,"chicken rice beans full toppings"],
+["Chipotle bowl",750,"chicken bowl with rice and toppings"],
+["Chipotle tacos",520,"3 tacos"],
+["Taco Bell burrito",490,"bean and cheese"],
+["Taco Bell tacos",380,"3 crunchy tacos"],
+["Dominos pizza 2 slices",520,"2 slices pepperoni"],
+["Raising Cane's box combo",1020,"4 tenders fries toast sauce"],
+["Raising Cane's 3 finger combo",810,"3 tenders fries toast sauce"],
+["Skyline cheese coney",340,"1 coney with mustard and onion"],
+["Skyline 2 cheese coneys",680,"2 coneys"],
+["Skyline 3 cheese coneys",1020,"3 coneys"],
+["Skyline chili fries",490,"regular fries with cheese"],
+["Skyline chili cheese fries large",640,"large fries with cheese"],
+["Skyline 3-way",560,"spaghetti chili cheese regular"],
+["Coffee black",5,"1 cup"],
+["Coffee with cream and sugar",80,"1 cup"],
+["London fog",200,"12oz with 2% milk and vanilla"],
+["London fog large",270,"16oz with 2% milk and vanilla"],
+["London fog iced",190,"16oz iced"],
+["Latte",190,"16oz with 2% milk"],
+["Iced latte",180,"16oz"],
+["Frappuccino",370,"medium"],
+["Orange juice",120,"8oz"],
+["Soda",150,"12oz can"],
+["Diet soda",0,"12oz can"],
+["Sports drink Gatorade",130,"20oz bottle"],
+["Whole milk",150,"8oz"],
+["2% milk",120,"8oz"],
+["Almond milk",40,"8oz unsweetened"],
+["Beer",150,"12oz regular"],
+["Light beer",100,"12oz"],
+["Wine",125,"5oz glass"],
+["Water",0,"any amount"],
+["Ranch dressing",140,"2 tablespoons"],
+["Caesar dressing",160,"2 tablespoons"],
+["Ketchup",20,"2 tablespoons"],
+["Sour cream",60,"2 tablespoons"],
+["Guacamole",100,"2 tablespoons"],
+["Salsa",20,"2 tablespoons"],
+["Shredded cheese",110,"quarter cup"],
+["Butter",100,"1 tablespoon"],
+["Olive oil",120,"1 tablespoon"]
+];
+
+// ── STATE ────────────────────────────────────────────────────────────────
+var state;
+try{state=JSON.parse(localStorage.getItem('dt_v1')||'null');}catch(e){}
+if(!state)state={totalPts:0,startWeight:227,weights:[],cal:{},habChecked:{},weeklyChecked:{},weekId:''};
+if(!state.cal)state.cal={};
+if(!state.habChecked)state.habChecked={};
+if(!state.weeklyChecked)state.weeklyChecked={};
+
+var habOffset=0, calOffset=0;
+var selFood=null;
+
+function dk(off){
+  var d=new Date();d.setDate(d.getDate()+off);
+  return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+}
+function pad(n){return String(n).padStart(2,'0');}
+function wk(){
+  var d=new Date();var s=new Date(d);s.setDate(d.getDate()-d.getDay());
+  return 'w'+s.getFullYear()+pad(s.getMonth()+1)+pad(s.getDate());
+}
+function dlbl(off){
+  if(off===0)return'Today';if(off===-1)return'Yesterday';
+  var d=new Date();d.setDate(d.getDate()+off);
+  return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+}
+function save(){try{localStorage.setItem('dt_v1',JSON.stringify(state));}catch(e){}}
+
+// Check week rollover
+(function(){
+  var w=wk();
+  if(state.weekId!==w){
+    // archive weekly checks from old week before clearing
+    state.weeklyChecked={};
+    state.weekId=w;
+    save();
+  }
+})();
+
+// ── CALORIE HELPERS ──────────────────────────────────────────────────────
+function getDayLog(off){return(state.cal[dk(off)]&&state.cal[dk(off)].log)||[];}
+function getDayCals(off){return getDayLog(off).reduce(function(s,e){return s+e.cals;},0);}
+function setDayLog(off,log){
+  if(!state.cal[dk(off)])state.cal[dk(off)]={log:[]};
+  state.cal[dk(off)].log=log;
+  save();
+  updateCalHabits(off);
+}
+
+function updateCalHabits(off){
+  if(off!==0)return; // only auto-update today
+  var log=getDayLog(0);
+  var meals=log.length;
+  var cals=getDayCals(0);
+  var key=dk(0);
+  if(!state.habChecked[key])state.habChecked[key]={};
+  // logged 3 meals
+  if(meals>=3&&!state.habChecked[key]['ch_logged3']){
+    state.habChecked[key]['ch_logged3']=true;
+    state.totalPts+=20;
+    showToast('+20 pts — logged 3 meals!');
+  } else if(meals<3&&state.habChecked[key]['ch_logged3']){
+    state.habChecked[key]['ch_logged3']=false;
+    state.totalPts=Math.max(0,state.totalPts-20);
+  }
+  // under 1800
+  if(cals>0&&cals<=1800&&!state.habChecked[key]['ch_under']){
+    state.habChecked[key]['ch_under']=true;
+    state.totalPts+=25;
+    showToast('+25 pts — under goal!');
+  } else if((cals>1800||cals===0)&&state.habChecked[key]['ch_under']){
+    state.habChecked[key]['ch_under']=false;
+    state.totalPts=Math.max(0,state.totalPts-25);
+  }
+  save();
+}
+
+// ── HABIT HELPERS ────────────────────────────────────────────────────────
+function getHabKey(off){return dk(off);}
+function getHabChecked(off){return state.habChecked[getHabKey(off)]||{};}
+
+function toggleHabit(id,pts,off){
+  var key=getHabKey(off);
+  if(!state.habChecked[key])state.habChecked[key]={};
+  var was=!!state.habChecked[key][id];
+  // block cal habits from manual toggle
+  if(id==='ch_logged3'||id==='ch_under')return;
+  state.habChecked[key][id]=!was;
+  if(!was){state.totalPts+=pts;showToast('+'+pts+' pts');}
+  else{state.totalPts=Math.max(0,state.totalPts-pts);}
+  save();
+  renderHabits();
+  renderHeader();
+}
+
+function toggleWeekly(id,pts){
+  var was=!!state.weeklyChecked[id];
+  state.weeklyChecked[id]=!was;
+  if(!was){state.totalPts+=pts;showToast('+'+pts+' pts — weekly win!');}
+  else{state.totalPts=Math.max(0,state.totalPts-pts);}
+  save();
+  renderHabits();
+  renderHeader();
+}
+
+function habitDayPts(off){
+  var ch=state.habChecked[dk(off)]||{};
+  var all=[...CORE,...BONUS,...CAL_HABITS];
+  return all.reduce(function(s,h){return s+(ch[h.id]?h.pts:0);},0);
+}
+function weeklyPts(){
+  return WEEKLY.reduce(function(s,h){return s+(state.weeklyChecked[h.id]?h.pts:0);},0);
+}
+
+// ── LEVEL HELPERS ────────────────────────────────────────────────────────
+function getLevel(pts){
+  var lv=LEVELS[0];
+  for(var i=0;i<LEVELS.length;i++){if(pts>=LEVELS[i].min)lv=LEVELS[i];}
+  return lv;
+}
+function getLevelIdx(pts){
+  var idx=0;
+  for(var i=0;i<LEVELS.length;i++){if(pts>=LEVELS[i].min)idx=i;}
+  return idx;
+}
+
+// ── FUZZY SEARCH ─────────────────────────────────────────────────────────
+function norm(s){return s.toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();}
+function scoreMatch(q,item){
+  var n=norm(item[0]);var nq=norm(q);
+  if(n===nq)return 100;if(n.startsWith(nq))return 90;if(n.includes(nq))return 80;
+  var qw=nq.split(' ').filter(function(w){return w.length>1;});
+  var nw=n.split(' ');var hits=0;
+  for(var i=0;i<qw.length;i++){for(var j=0;j<nw.length;j++){if(nw[j].startsWith(qw[i])||qw[i].startsWith(nw[j])){hits++;break;}}}
+  if(hits===qw.length&&qw.length>0)return 70;
+  if(hits>0)return 30+Math.round((hits/Math.max(qw.length,1))*30);
+  return 0;
+}
+function doSearch(q){
+  if(!q||q.length<2)return[];
+  var scored=[];
+  for(var i=0;i<DB.length;i++){var s=scoreMatch(q,DB[i]);if(s>0)scored.push({item:DB[i],s:s});}
+  scored.sort(function(a,b){return b.s-a.s;});
+  return scored.slice(0,8).map(function(x){return x.item;});
+}
+
+// ── TOAST ────────────────────────────────────────────────────────────────
+var toastTimer=null;
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){t.classList.remove('show');},2000);
+}
+
+// ── RENDER HEADER ────────────────────────────────────────────────────────
+function renderHeader(){
+  var pts=state.totalPts;
+  var idx=getLevelIdx(pts);
+  var lv=LEVELS[idx];
+  var next=LEVELS[idx+1];
+  // Level up detection
+  if(state.lastLevelIdx===undefined)state.lastLevelIdx=idx;
+  if(idx>state.lastLevelIdx){
+    state.lastLevelIdx=idx;
+    if(lv.reward)showToast('Level up: '+lv.n+' — '+lv.reward);
+    else showToast('Level up: '+lv.n+'!');
+    save();
+  }
+  document.getElementById('hdr-pts').textContent=pts.toLocaleString()+' pts';
+  document.getElementById('hdr-level').textContent=lv.n;
+  var pct=0;
+  if(next){
+    pct=Math.round(((pts-lv.min)/(next.min-lv.min))*100);
+    document.getElementById('hdr-next-pts').textContent=(next.min-pts).toLocaleString()+' to '+next.n;
+  } else {
+    pct=100;
+    document.getElementById('hdr-next-pts').textContent='Max level';
+  }
+  document.getElementById('hdr-bar').style.width=pct+'%';
+}
+
+// ── RENDER HABITS ────────────────────────────────────────────────────────
+function renderHabits(){
+  var off=habOffset;
+  var ch=getHabChecked(off);
+
+  document.getElementById('h-day-lbl').textContent=dlbl(off);
+  document.getElementById('h-next').disabled=(off>=0);
+
+  function makeList(el,habits,onToggle){
+    el.innerHTML='';
+    habits.forEach(function(h){
+      var done=!!ch[h.id];
+      var row=document.createElement('div');row.className='habit-row';
+      var checkDiv=document.createElement('div');
+      checkDiv.className='habit-check'+(done?' done':'');
+      var nameDiv=document.createElement('div');nameDiv.className='habit-name';nameDiv.textContent=h.name;
+      var ptsDiv=document.createElement('div');ptsDiv.className='habit-pts'+(done?' earned':'');ptsDiv.textContent='+'+h.pts;
+      row.appendChild(checkDiv);row.appendChild(nameDiv);row.appendChild(ptsDiv);
+      checkDiv.addEventListener('click',function(){onToggle(h.id,h.pts,off);});
+      el.appendChild(row);
+    });
+  }
+
+  makeList(document.getElementById('core-list'),CORE,toggleHabit);
+  makeList(document.getElementById('bonus-list'),BONUS,toggleHabit);
+
+  // cal habits — show state but not manually toggleable
+  var calEl=document.getElementById('cal-habit-list');calEl.innerHTML='';
+  CAL_HABITS.forEach(function(h){
+    var done=!!ch[h.id];
+    var row=document.createElement('div');row.className='habit-row';
+    var checkDiv=document.createElement('div');checkDiv.className='habit-check'+(done?' done':'');
+    var nameDiv=document.createElement('div');nameDiv.className='habit-name';nameDiv.textContent=h.name;
+    var ptsDiv=document.createElement('div');ptsDiv.className='habit-pts'+(done?' earned':'');ptsDiv.textContent='+'+h.pts;
+    row.appendChild(checkDiv);row.appendChild(nameDiv);row.appendChild(ptsDiv);
+    calEl.appendChild(row);
+  });
+
+  // weekly
+  var wEl=document.getElementById('weekly-list');wEl.innerHTML='';
+  WEEKLY.forEach(function(h){
+    var done=!!state.weeklyChecked[h.id];
+    var row=document.createElement('div');row.className='habit-row';
+    var checkDiv=document.createElement('div');checkDiv.className='habit-check'+(done?' done':'');
+    var nameDiv=document.createElement('div');nameDiv.className='habit-name';nameDiv.textContent=h.name;
+    var ptsDiv=document.createElement('div');ptsDiv.className='habit-pts'+(done?' earned':'');ptsDiv.textContent='+'+h.pts;
+    row.appendChild(checkDiv);row.appendChild(nameDiv);row.appendChild(ptsDiv);
+    checkDiv.addEventListener('click',function(){toggleWeekly(h.id,h.pts);});
+    wEl.appendChild(row);
+  });
+
+  // week grid
+  var wg=document.getElementById('week-grid');wg.innerHTML='';
+  var days=['Su','Mo','Tu','We','Th','Fr','Sa'];
+  var today=new Date();var dow=today.getDay();
+  for(var i=0;i<7;i++){
+    var d=new Date(today);d.setDate(today.getDate()-dow+i);
+    var k=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+    var isToday=(i===dow);
+    var pts=habitDayPts(i-dow)+(isToday?weeklyPts():0);
+    if(i===dow&&habOffset!==0)pts=habitDayPts(0);
+    // simpler: use stored data
+    var ch2=state.habChecked[k]||{};
+    var allH=[...CORE,...BONUS,...CAL_HABITS];
+    var dayPts=allH.reduce(function(s,h){return s+(ch2[h.id]?h.pts:0);},0);
+    var cell=document.createElement('div');
+    cell.className='day-cell'+(dayPts>0?' active':'')+(isToday?' today':'');
+    cell.innerHTML='<div class="day-lbl">'+days[i]+'</div><div class="day-pts">'+(dayPts||'-')+'</div>';
+    wg.appendChild(cell);
+  }
+}
+
+// ── RENDER CALORIES ──────────────────────────────────────────────────────
+function renderCalories(){
+  var off=calOffset;
+  var log=getDayLog(off);
+  var eaten=getDayCals(off);
+  var rem=1800-eaten;
+  var pct=Math.min(Math.round(eaten/1800*100),100);
+  var over=eaten>1800;var close=!over&&pct>=85;
+
+  document.getElementById('c-day-lbl').textContent=dlbl(off);
+  document.getElementById('c-next').disabled=(off>=0);
+  document.getElementById('c-log-title').textContent=off===0?"Today's log":dlbl(off)+" log";
+
+  var eEl=document.getElementById('c-eaten');
+  eEl.textContent=eaten.toLocaleString();
+  eEl.className='metric-val'+(over?' over':close?' close':eaten===0?'':' good');
+  var rEl=document.getElementById('c-rem');
+  rEl.textContent=Math.abs(rem).toLocaleString();
+  rEl.className='metric-val'+(over?' over':close?' close':'');
+  document.getElementById('c-rem-sub').textContent=over?(Math.abs(rem)+' over'):rem===0?'Goal hit!':'remaining';
+  document.getElementById('c-pct').textContent=pct+'%';
+  var bar=document.getElementById('c-bar');
+  bar.style.width=pct+'%';
+  bar.className='prog-fill'+(over?' over':close?' close':'');
+
+  var logEl=document.getElementById('food-log');
+  if(!log.length){logEl.innerHTML='<div class="empty">Nothing logged yet</div>';}
+  else{
+    logEl.innerHTML='';
+    var rev=log.slice().reverse();
+    rev.forEach(function(entry,ri){
+      var i=log.length-1-ri;
+      var div=document.createElement('div');div.className='log-item';
+      div.innerHTML='<div class="log-info"><div class="log-name">'+entry.name+'</div>'+(entry.note?'<div class="log-note">'+entry.note+'</div>':'')+'</div>'
+        +'<div class="log-r"><span class="log-time">'+entry.time+'</span><span class="log-cals">'+entry.cals+'</span>'
+        +'<button class="log-rm" data-i="'+i+'">×</button></div>';
+      div.querySelector('.log-rm').addEventListener('click',function(){
+        var idx=parseInt(this.getAttribute('data-i'));
+        var l=getDayLog(off);l.splice(idx,1);setDayLog(off,l);renderCalories();renderHabits();renderHeader();
+      });
+      logEl.appendChild(div);
+    });
+  }
+
+  // cal bars
+  var bEl=document.getElementById('cal-bars');bEl.innerHTML='';
+  var dayNames=['Su','Mo','Tu','We','Th','Fr','Sa'];
+  var tod=new Date();
+  for(var i=-6;i<=0;i++){
+    var cal=getDayCals(i);
+    var p=cal>0?Math.min(cal/1800*100,110):0;
+    var ov=cal>1800;var cl=!ov&&p>=85;
+    var dd=new Date();dd.setDate(tod.getDate()+i);
+    var h=Math.round(p/110*55);
+    var wrap=document.createElement('div');wrap.className='bar-wrap';
+    wrap.innerHTML='<div class="bar-bg"><div class="bar-fill'+(ov?' over':cl?' close':'')+'" style="height:'+h+'px"></div></div>'
+      +'<div class="bar-day" style="'+(i===0?'font-weight:600;color:var(--ink)':'')+'">'+dayNames[dd.getDay()]+'</div>'
+      +'<div class="bar-val">'+(cal>0?cal:'')+'</div>';
+    bEl.appendChild(wrap);
+  }
+}
+
+// ── RENDER PROGRESS ──────────────────────────────────────────────────────
+function renderProgress(){
+  var pts=state.totalPts;
+  var idx=getLevelIdx(pts);
+  var lv=LEVELS[idx];
+  var next=LEVELS[idx+1];
+
+  document.getElementById('lc-name').textContent=lv.n;
+  document.getElementById('lc-sub').textContent=lv.desc;
+  var pct=0;
+  if(next){
+    pct=Math.round(((pts-lv.min)/(next.min-lv.min))*100);
+    document.getElementById('lc-cur-pts').textContent=pts.toLocaleString()+' pts';
+    document.getElementById('lc-next-name').textContent=next.n+' at '+next.min.toLocaleString();
+  } else {
+    pct=100;
+    document.getElementById('lc-cur-pts').textContent=pts.toLocaleString()+' pts';
+    document.getElementById('lc-next-name').textContent='Max level reached';
+  }
+  document.getElementById('lc-bar').style.width=pct+'%';
+
+  // milestones
+  var lostLbs=0;
+  if(state.startWeight&&state.weights.length){
+    lostLbs=Math.max(0,state.startWeight-Math.min.apply(null,state.weights));
+  }
+  var ms=document.getElementById('milestones');ms.innerHTML='';
+  MILESTONES.forEach(function(m){
+    var un=lostLbs>=m.lbs;
+    var div=document.createElement('div');
+    div.className='ms'+(un?' unlocked':'');
+    if(m.lbs===42){
+      div.style.gridColumn='1 / -1';
+      div.style.background=un?'linear-gradient(135deg,#1a9e75,#0f6e52)':'';
+      div.style.borderColor=un?'transparent':'';
+      div.style.padding=un?'16px':'12px';
+    }
+    div.innerHTML='<div class="ms-lbs" style="'+(m.lbs===42?'font-size:'+(un?'22':'18')+'px':'')+'">'+m.lbs+' lbs</div>'
+      +'<div class="ms-reward" style="'+(m.lbs===42&&un?'color:white;font-size:15px;font-weight:600':'')+'">'+m.reward+'</div>'
+      +'<div class="ms-lock" style="'+(m.lbs===42&&un?'color:rgba(255,255,255,0.8)':'')+(m.lbs===42&&!un?'font-size:12px':'')+'">'+( un?'Unlocked':'Locked')+'</div>';
+    ms.appendChild(div);
+  });
+
+  // level list
+  var ll=document.getElementById('level-list');ll.innerHTML='';
+  LEVELS.forEach(function(lv2,i){
+    var done=pts>=lv2.min;
+    var cur=(i===idx);
+    var row=document.createElement('div');
+    row.className='level-row'+(cur?' current':done&&!cur?' done':'');
+    var next2=LEVELS[i+1];
+    var rangeStr=next2?(lv2.min.toLocaleString()+' – '+(next2.min-1).toLocaleString()+' pts'):(lv2.min.toLocaleString()+'+ pts');
+    var rewardHtml=lv2.reward
+      ?'<div style="font-size:11px;margin-top:3px;'+(cur?'color:var(--green-d);font-weight:500':done?'color:var(--green-d)':'color:var(--ink3)')+'">🎁 '+lv2.reward+'</div>'
+      :'<div style="font-size:11px;color:var(--ink4);margin-top:2px">Starting point</div>';
+    var statusBadge=cur?'<div class="lr-badge" style="flex-shrink:0;margin-left:6px">You</div>'
+      :done?'<div style="font-size:16px;color:var(--green);flex-shrink:0;margin-left:4px">✓</div>':'';
+    row.innerHTML='<div class="lr-num">'+(i+1)+'</div>'
+      +'<div style="flex:1">'
+        +'<div class="lr-name">'+lv2.n+'</div>'
+        +'<div style="font-size:11px;color:var(--ink4);margin-top:1px">'+rangeStr+'</div>'
+        +rewardHtml
+      +'</div>'
+      +statusBadge;
+    ll.appendChild(row);
+  });
+
+  // habit bars
+  var hb=document.getElementById('habit-bars');hb.innerHTML='';
+  var dayN=['Su','Mo','Tu','We','Th','Fr','Sa'];
+  var tod2=new Date();
+  for(var i=-6;i<=0;i++){
+    var dd2=new Date();dd2.setDate(tod2.getDate()+i);
+    var k2=dd2.getFullYear()+'-'+pad(dd2.getMonth()+1)+'-'+pad(dd2.getDate());
+    var ch2=state.habChecked[k2]||{};
+    var allH=[...CORE,...BONUS,...CAL_HABITS];
+    var dp=allH.reduce(function(s,h){return s+(ch2[h.id]?h.pts:0);},0);
+    var maxPts=allH.reduce(function(s,h){return s+h.pts;},0)+WEEKLY.reduce(function(s,h){return s+h.pts;},0);
+    var p2=dp>0?Math.min(dp/maxPts*100,100):0;
+    var h2=Math.round(p2/100*55);
+    var wrap2=document.createElement('div');wrap2.className='bar-wrap';
+    wrap2.innerHTML='<div class="bar-bg"><div class="bar-fill" style="height:'+h2+'px"></div></div>'
+      +'<div class="bar-day" style="'+(i===0?'font-weight:600;color:var(--ink)':'')+'">'+dayN[dd2.getDay()]+'</div>'
+      +'<div class="bar-val">'+(dp>0?dp:'')+'</div>';
+    hb.appendChild(wrap2);
+  }
+
+  // weight graphic
+  var wg = document.getElementById('weight-graphic');
+  var sw = state.startWeight || 227;
+  var goal = 185;
+  var cur = state.weights.length ? state.weights[state.weights.length-1] : sw;
+  var lost = Math.max(0, sw - cur);
+  var pctLost = Math.min(lost / (sw - 185) * 100, 100);
+  var remaining = Math.max(0, cur - goal);
+
+  var lostColor = lost >= 20 ? 'var(--green)' : lost >= 10 ? 'var(--amber)' : 'var(--green)';
+
+  // build graphic
+  var html = '';
+  // big numbers row
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">';
+  html += '<div style="text-align:center;background:var(--line2);border-radius:8px;padding:10px 6px">';
+  html +=   '<div style="font-size:11px;color:var(--ink3);margin-bottom:3px">Start</div>';
+  html +=   '<div style="font-size:22px;font-weight:700;color:var(--ink)">'+sw+'</div>';
+  html +=   '<div style="font-size:11px;color:var(--ink4)">lbs</div>';
+  html += '</div>';
+  html += '<div style="text-align:center;background:var(--green-l);border:1px solid #9FE1CB;border-radius:8px;padding:10px 6px">';
+  html +=   '<div style="font-size:11px;color:var(--green-d);margin-bottom:3px">Current</div>';
+  html +=   '<div style="font-size:22px;font-weight:700;color:var(--green-d)">'+cur.toFixed(1)+'</div>';
+  html +=   '<div style="font-size:11px;color:var(--green-d)">lbs</div>';
+  html += '</div>';
+  html += '<div style="text-align:center;background:var(--line2);border-radius:8px;padding:10px 6px">';
+  html +=   '<div style="font-size:11px;color:var(--ink3);margin-bottom:3px">Goal</div>';
+  html +=   '<div style="font-size:22px;font-weight:700;color:var(--ink)">'+goal+'</div>';
+  html +=   '<div style="font-size:11px;color:var(--ink4)">lbs</div>';
+  html += '</div>';
+  html += '</div>';
+
+  // progress bar
+  html += '<div style="margin-bottom:6px">';
+  html += '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin-bottom:5px">';
+  html +=   '<span style="font-weight:600;color:'+lostColor+'">'+lost.toFixed(1)+' lbs lost</span>';
+  html +=   '<span>'+remaining.toFixed(1)+' lbs to go</span>';
+  html += '</div>';
+  html += '<div style="background:var(--line2);border-radius:8px;height:14px;overflow:hidden;position:relative">';
+  html +=   '<div style="height:100%;border-radius:8px;background:var(--green);width:'+pctLost+'%;transition:width .5s;min-width:'+(lost>0?'2%':'0')+'"></div>';
+  html += '</div>';
+  html += '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink4);margin-top:3px">';
+  html +=   '<span>'+sw+' lbs (start)</span><span>185 lbs (goal)</span>';
+  html += '</div>';
+  html += '</div>';
+
+  // weight history sparkline if we have entries
+  if(state.weights.length > 1){
+    var wArr = state.weights;
+    var minW = Math.min.apply(null, wArr);
+    var maxW = Math.max.apply(null, wArr);
+    var range = Math.max(maxW - minW, 1);
+    var w = 100, h2 = 40;
+    var pts2 = wArr.map(function(v, i){
+      var x = wArr.length===1 ? w/2 : (i/(wArr.length-1))*w;
+      var y = h2 - ((v - minW)/range)*(h2-4) - 2;
+      return x.toFixed(1)+','+y.toFixed(1);
+    }).join(' ');
+    html += '<div style="margin-top:8px">';
+    html +=   '<div style="font-size:11px;color:var(--ink3);margin-bottom:4px">Weight history</div>';
+    html +=   '<svg viewBox="0 0 100 '+h2+'" style="width:100%;height:'+h2+'px;display:block" preserveAspectRatio="none">';
+    html +=     '<polyline points="'+pts2+'" fill="none" stroke="var(--green)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>';
+    // dots
+    wArr.forEach(function(v, i){
+      var x = wArr.length===1 ? w/2 : (i/(wArr.length-1))*w;
+      var y = h2 - ((v - minW)/range)*(h2-4) - 2;
+      html += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="1.5" fill="var(--green)"/>';
+    });
+    html +=   '</svg>';
+    html += '</div>';
+  }
+
+  wg.innerHTML = html;
+
+  // weight status
+  if(state.weights.length){
+    var lat=state.weights[state.weights.length-1];
+    var lost2=state.startWeight?Math.max(0,state.startWeight-lat):0;
+    document.getElementById('w-status').textContent='Latest: '+lat+' lbs'+(lost2>0?' | Lost: '+lost2.toFixed(1)+' lbs from start':'');
+  }
+}
+
+
+function pickFood(item){
+  selFood=item;
+  document.getElementById('food-input').value=item[0];
+  document.getElementById('suggestions').classList.remove('show');
+  document.getElementById('cal-note').textContent=item[2]||'';
+  document.getElementById('cal-num').value=item[1]||'';
+  document.getElementById('cal-adjust').classList.add('show');
+  var btn=document.getElementById('log-btn');
+  btn.disabled=false;
+  btn.textContent='Log '+(item[1]||0)+' cal — '+item[0];
+}
+
+function activateManual(name){
+  // Called when user has typed something not in DB — pre-fill name, leave cals blank
+  selFood=[name, 0, 'manual entry'];
+  document.getElementById('cal-note').textContent='Not in database — enter calories below';
+  document.getElementById('cal-num').value='';
+  document.getElementById('cal-adjust').classList.add('show');
+  var btn=document.getElementById('log-btn');
+  btn.disabled=false;
+  btn.textContent='Log entry';
+}
+
+function doLog(){
+  var cals=parseInt(document.getElementById('cal-num').value)||0;
+  var inputName=document.getElementById('food-input').value.trim();
+  if(!inputName||cals<=0)return;
+  var name=selFood?selFood[0]:inputName;
+  var note=selFood?selFood[2]:'manual entry';
+  var now=new Date();
+  var time=now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  var log=getDayLog(calOffset);
+  log.push({name:name,cals:cals,note:note,time:time});
+  setDayLog(calOffset,log);
+  document.getElementById('food-input').value='';
+  document.getElementById('cal-num').value='';
+  document.getElementById('cal-adjust').classList.remove('show');
+  document.getElementById('log-btn').disabled=true;
+  document.getElementById('log-btn').textContent='Type a food name above';
+  var s=document.getElementById('log-status');
+  s.textContent='Logged '+cals+' cal';s.className='status-msg ok';
+  selFood=null;
+  renderCalories();
+  renderHabits();
+  renderHeader();
+  setTimeout(function(){s.textContent='';s.className='status-msg';},2500);
+}
+
+// ── FOOD INPUT EVENTS ────────────────────────────────────────────────────
+document.getElementById('food-input').addEventListener('input',function(){
+  var val=this.value.trim();
+  selFood=null;
+  document.getElementById('cal-adjust').classList.remove('show');
+  document.getElementById('log-btn').disabled=true;
+  document.getElementById('log-btn').textContent='Type a food name above';
+  if(!val){document.getElementById('suggestions').classList.remove('show');return;}
+  var results=doSearch(val);
+  var el=document.getElementById('suggestions');
+  el.innerHTML='';
+  if(results.length){
+    results.forEach(function(item){
+      var div=document.createElement('div');div.className='sug-item';
+      div.innerHTML='<div><div class="sug-name">'+item[0]+'</div><div class="sug-detail">'+item[2]+'</div></div>'
+        +'<div class="sug-cals">'+item[1]+'</div>';
+      div.addEventListener('mousedown',function(e){e.preventDefault();pickFood(item);});
+      el.appendChild(div);
+    });
+    // Add "log manually" option at bottom
+    var manual=document.createElement('div');manual.className='sug-item';
+    manual.style.borderTop='1px solid var(--line)';
+    manual.innerHTML='<div><div class="sug-name" style="color:var(--ink3)">Log "'+val+'" manually</div>'
+      +'<div class="sug-detail">Enter calories yourself</div></div>'
+      +'<div class="sug-cals" style="color:var(--ink3)">+</div>';
+    manual.addEventListener('mousedown',function(e){e.preventDefault();activateManual(val);el.classList.remove('show');});
+    el.appendChild(manual);
+  } else {
+    // No results — show manual option only
+    var manual2=document.createElement('div');manual2.className='sug-item';
+    manual2.innerHTML='<div><div class="sug-name">Log "'+val+'" manually</div>'
+      +'<div class="sug-detail">Not in database — enter calories yourself</div></div>'
+      +'<div class="sug-cals" style="color:var(--ink3)">+</div>';
+    manual2.addEventListener('mousedown',function(e){e.preventDefault();activateManual(val);el.classList.remove('show');});
+    el.appendChild(manual2);
+  }
+  el.classList.add('show');
+});
+document.getElementById('food-input').addEventListener('blur',function(){
+  setTimeout(function(){document.getElementById('suggestions').classList.remove('show');},150);
+});
+document.getElementById('cal-num').addEventListener('input',function(){
+  var name=selFood?selFood[0]:document.getElementById('food-input').value.trim();
+  var cals=parseInt(this.value)||0;
+  var btn=document.getElementById('log-btn');
+  if(cals>0&&name){
+    btn.disabled=false;
+    btn.textContent='Log '+cals+' cal — '+name;
+  } else {
+    btn.disabled=true;
+    btn.textContent='Type a food name above';
+  }
+});
+document.getElementById('cal-num').addEventListener('keydown',function(e){
+  if(e.key==='Enter')doLog();
+});
+document.getElementById('log-btn').addEventListener('click',doLog);
+
+
+// ── DAY NAV ──────────────────────────────────────────────────────────────
+document.getElementById('h-prev').addEventListener('click',function(){habOffset--;renderHabits();});
+document.getElementById('h-next').addEventListener('click',function(){if(habOffset<0){habOffset++;renderHabits();}});
+document.getElementById('c-prev').addEventListener('click',function(){calOffset--;renderCalories();});
+document.getElementById('c-next').addEventListener('click',function(){if(calOffset<0){calOffset++;renderCalories();}});
+
+// ── WEIGHT ───────────────────────────────────────────────────────────────
+document.getElementById('w-btn').addEventListener('click',function(){
+  var v=parseFloat(document.getElementById('w-input').value);
+  if(isNaN(v)||v<50||v>500)return;
+  if(!state.startWeight)state.startWeight=v;
+  // check if weight loss unlocked a milestone for points
+  var prevLost=state.weights.length&&state.startWeight?Math.max(0,state.startWeight-Math.min.apply(null,state.weights)):0;
+  state.weights.push(v);
+  var newLost=Math.max(0,state.startWeight-Math.min.apply(null,state.weights));
+  MILESTONES.forEach(function(m){
+    if(newLost>=m.lbs&&prevLost<m.lbs){
+      state.totalPts+=150;
+      showToast('+150 pts — '+m.lbs+' lbs lost milestone!');
+    }
+  });
+  // weekly win: lost weight vs last weigh-in
+  if(state.weights.length>=2&&v<state.weights[state.weights.length-2]){
+    if(!state.weeklyChecked['w_lostw']){
+      state.weeklyChecked['w_lostw']=true;
+      state.totalPts+=100;
+      showToast('+100 pts — lost weight this week!');
+    }
+  }
+  document.getElementById('w-input').value='';
+  save();
+  renderProgress();
+  renderHeader();
+});
+
+// ── TAB SWITCHING ────────────────────────────────────────────────────────
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  var tabs=['calories','habits','progress'];
+  tabs.forEach(function(t,i){
+    if(t===name){
+      document.querySelectorAll('.tab')[i].classList.add('active');
+      document.getElementById('panel-'+t).classList.add('active');
+    }
+  });
+  if(name==='habits')renderHabits();
+  if(name==='calories')renderCalories();
+  if(name==='progress')renderProgress();
+}
+
+// ── EXPORT / IMPORT ──────────────────────────────────────────────────────
+document.getElementById('export-btn').addEventListener('click',function(){
+  var data=JSON.stringify(state,null,2);
+  // Try file download (works on desktop/Android)
+  try{
+    var blob=new Blob([data],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    var now=new Date();
+    var ds=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
+    a.href=url;a.download='tracker-backup-'+ds+'.json';
+    document.body.appendChild(a);a.click();
+    document.body.removeChild(a);URL.revokeObjectURL(url);
+  }catch(e){}
+  // Always show copy modal (iOS Safari needs this)
+  showExportModal(data);
+});
+
+function showExportModal(data){
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:200;display:flex;align-items:flex-end;justify-content:center';
+  var sheet=document.createElement('div');
+  sheet.style.cssText='background:var(--card);border-radius:16px 16px 0 0;padding:20px 16px;width:100%;max-height:82vh;display:flex;flex-direction:column;gap:12px';
+  sheet.innerHTML='<div style="font-size:15px;font-weight:600;color:var(--ink)">Your backup data</div>'
+    +'<div style="font-size:13px;color:var(--ink3);line-height:1.5">Tap <strong>Copy</strong>, then paste into Notes or email to yourself. Use Import to restore.</div>'
+    +'<textarea id="export-ta" readonly style="flex:1;min-height:160px;font-size:10px;font-family:monospace;border:1px solid var(--line);border-radius:8px;padding:10px;color:var(--ink);background:var(--line2);resize:none;-webkit-user-select:all;user-select:all">'+data+'</textarea>'
+    +'<button id="copy-export-btn" style="background:var(--green);color:white;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:600;width:100%;cursor:pointer">Copy to clipboard</button>'
+    +'<button id="close-export-btn" style="background:var(--line2);color:var(--ink3);border:none;border-radius:10px;padding:11px;font-size:14px;width:100%;cursor:pointer">Close</button>';
+  overlay.appendChild(sheet);
+  document.body.appendChild(overlay);
+  setTimeout(function(){
+    var ta=document.getElementById('export-ta');
+    ta.focus();ta.select();ta.setSelectionRange(0,99999);
+  },150);
+  document.getElementById('copy-export-btn').addEventListener('click',function(){
+    var ta=document.getElementById('export-ta');
+    ta.focus();ta.select();ta.setSelectionRange(0,99999);
+    var btn=this;
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(ta.value).then(function(){btn.textContent='Copied!';}).catch(function(){document.execCommand('copy');btn.textContent='Copied!';});
+    } else {
+      document.execCommand('copy');btn.textContent='Copied!';
+    }
+  });
+  document.getElementById('close-export-btn').addEventListener('click',function(){document.body.removeChild(overlay);});
+  overlay.addEventListener('click',function(e){if(e.target===overlay)document.body.removeChild(overlay);});
+}
+
+document.getElementById('import-file').addEventListener('change',function(e){
+  var file=e.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      var imported=JSON.parse(ev.target.result);
+      if(typeof imported.totalPts!=='number')throw new Error('Invalid');
+      state=imported;save();
+      renderHeader();renderCalories();renderHabits();renderProgress();
+      var s=document.getElementById('backup-status');
+      s.style.color='var(--green)';
+      s.textContent='Imported! Your data has been restored.';
+      setTimeout(function(){s.textContent='';},4000);
+    }catch(err){
+      var s=document.getElementById('backup-status');
+      s.style.color='var(--red)';
+      s.textContent='Could not read file — make sure it is a valid backup.';
+      setTimeout(function(){s.textContent='';s.style.color='var(--green)';},4000);
+    }
+    e.target.value='';
+  };
+  reader.readAsText(file);
+});
+
+// Import from pasted text
+var importPasteBtn=document.createElement('button');
+importPasteBtn.className='btn';importPasteBtn.style.cssText='width:100%;margin-top:0;font-size:13px';
+importPasteBtn.textContent='Import from copied text';
+var backupCard=document.getElementById('backup-status').parentElement;
+backupCard.insertBefore(importPasteBtn,document.getElementById('backup-status'));
+importPasteBtn.addEventListener('click',function(){
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:200;display:flex;align-items:flex-end;justify-content:center';
+  var sheet=document.createElement('div');
+  sheet.style.cssText='background:var(--card);border-radius:16px 16px 0 0;padding:20px 16px;width:100%;max-height:82vh;display:flex;flex-direction:column;gap:12px';
+  sheet.innerHTML='<div style="font-size:15px;font-weight:600;color:var(--ink)">Import from text</div>'
+    +'<div style="font-size:13px;color:var(--ink3);line-height:1.5">Paste your backup text below and tap Restore.</div>'
+    +'<textarea id="import-ta" style="flex:1;min-height:160px;font-size:10px;font-family:monospace;border:1px solid var(--line);border-radius:8px;padding:10px;color:var(--ink);background:var(--line2);resize:none" placeholder="Paste backup data here..."></textarea>'
+    +'<button id="restore-btn" style="background:var(--green);color:white;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:600;width:100%;cursor:pointer">Restore</button>'
+    +'<button id="close-import-btn" style="background:var(--line2);color:var(--ink3);border:none;border-radius:10px;padding:11px;font-size:14px;width:100%;cursor:pointer">Cancel</button>';
+  overlay.appendChild(sheet);document.body.appendChild(overlay);
+  setTimeout(function(){document.getElementById('import-ta').focus();},150);
+  document.getElementById('restore-btn').addEventListener('click',function(){
+    try{
+      var imported=JSON.parse(document.getElementById('import-ta').value);
+      if(typeof imported.totalPts!=='number')throw new Error('Invalid');
+      state=imported;save();
+      renderHeader();renderCalories();renderHabits();renderProgress();
+      document.body.removeChild(overlay);
+      var s=document.getElementById('backup-status');
+      s.style.color='var(--green)';
+      s.textContent='Restored! All your data is back.';
+      setTimeout(function(){s.textContent='';},4000);
+    }catch(e){
+      document.getElementById('restore-btn').textContent='Invalid data — try again';
+      setTimeout(function(){document.getElementById('restore-btn').textContent='Restore';},2500);
+    }
+  });
+  document.getElementById('close-import-btn').addEventListener('click',function(){document.body.removeChild(overlay);});
+  overlay.addEventListener('click',function(e){if(e.target===overlay)document.body.removeChild(overlay);});
+});
+
+// ── INIT ─────────────────────────────────────────────────────────────────
+renderHeader();
+renderCalories();
+</script>
+</body>
+</html>
